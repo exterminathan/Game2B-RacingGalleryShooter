@@ -46,7 +46,7 @@ class GalleryShooter extends Phaser.Scene {
         //background
         this.load.image("bg", "bg.png");
 
-        var newFont = new FontFace('CustomFont', 'url(/assets/customfont.ttf)');
+        var newFont = new FontFace('CustomFont', 'url(./assets/customfont.ttf)');
         newFont.load().then((loadedFont) => {
             document.fonts.add(loadedFont);
             console.log('Font loaded');
