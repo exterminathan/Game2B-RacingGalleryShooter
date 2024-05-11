@@ -28,7 +28,7 @@ let config = {
     height: 800,
     parent: 'gameContainer',
     backgroundColor: "#2c2f33",
-    scene: [GalleryShooter, WinEndScreen, PlayerDead]
+    scene: [GalleryShooter, WinEndScreen, PlayerDead, EnemyBoundEnd]
 }
 
 // Global variable to hold sprites

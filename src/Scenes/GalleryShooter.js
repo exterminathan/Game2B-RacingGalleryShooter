@@ -43,8 +43,15 @@ class GalleryShooter extends Phaser.Scene {
         this.load.image("barrel_blue", "barrel_blue.png");
         this.load.image("barrel_red", "barrel_red.png");
 
-        //background
-        this.load.image("bg", "bg.png");
+
+
+        this.load.setPath('./assets/sounds')
+        this.load.audio('pew', 'blaster.mp3');
+        this.load.audio('death', 'crash.mp3')
+
+
+
+
 
         var newFont = new FontFace('CustomFont', 'url(./assets/customfont.ttf)');
         newFont.load().then((loadedFont) => {
@@ -68,6 +75,8 @@ class GalleryShooter extends Phaser.Scene {
 
         this.setupGame();
 
+        this.pewSound = this.sound.add('pew', { volume: 1, loop: false, detune: 0, rate: 1 });
+        this.dieSound = this.sound.add('death');
 
         // Create a status bar container at the bottom
         this.statusBar = this.add.container(0, game.config.height - 50);
@@ -198,12 +207,31 @@ class GalleryShooter extends Phaser.Scene {
         this.scoreText.setText('Score: ' + this.globalData.score);
         this.healthText.setText('Health: ' + this.player.hp);
 
+        this.checkEnemyBoundCross();
+
+
         if (this.enemiesOnField == 0) {
             this.globalData.highScore = this.score;
             console.log("level clear");
             this.enemiesOnField = 0;
             this.scene.start('WinEndScreen');
         }
+
+
+    }
+
+
+    checkEnemyBoundCross() {
+        this.enemies.children.iterate((enemy) => {
+            if (enemy.y >= 690) {
+                console.log("Enemy crossed bounds");
+                this.dieSound.play({ volume: 1, loop: false, detune: 0, seek: 0, restart: true });
+
+                this.time.delayedCall(2000, () => {
+                    this.scene.start('EnemyBoundEnd');
+                }, [], this);
+            }
+        })
     }
 
     handleInput() {
@@ -239,6 +267,8 @@ class GalleryShooter extends Phaser.Scene {
         if (this.gridMove) {
             const missile = new PlayerMissile(this, this.player.x, this.player.y - 20, "missile");
             this.missiles.add(missile);
+            this.pewSound.play({ volume: 1, loop: false, detune: 0, seek: 0, restart: true });
+
             console.log("Missile fired");
         } else {
             console.log("Missile fire blocked by gridMove flag");
@@ -419,8 +449,12 @@ class GalleryShooter extends Phaser.Scene {
         if ((player instanceof Player)) {
             console.log("hp: ", player.hp);
             if (player.hp <= 0) {
+                this.dieSound.play({ volume: 1, loop: false, detune: 0, seek: 0, restart: true });
+
                 player.destroy();
-                this.scene.start('PlayerDead');
+                this.time.delayedCall(1000, () => {
+                    this.scene.start('PlayerDead');
+                }, [], this);
         }
         }
         
@@ -430,7 +464,11 @@ class GalleryShooter extends Phaser.Scene {
     PlayerEnemyCollision(player) {
         console.log("An Enemy has collided with the player!");
         player.destroy();
-        this.scene.start('PlayerDead');
+        this.dieSound.play({ volume: 1, loop: false, detune: 0, seek: 0, restart: true });
+
+        this.time.delayedCall(1000, () => {
+            this.scene.start('PlayerDead');
+        }, [], this);
     }
 
     
@@ -658,6 +696,71 @@ class WinEndScreen extends Phaser.Scene {
         this.scene.start('GalleryShooterScene');  // Start the main game scene
     }
 }
+
+
+//Win End Screen
+class EnemyBoundEnd extends Phaser.Scene {
+    constructor() {
+        super("EnemyBoundEnd");
+        let globalData = GlobalVars.getInstance();
+        this.score = globalData.score;
+
+
+        if (this.score > globalData.highScore) {
+            globalData.highScore = this.score;
+        }
+
+    }
+
+    create() {
+        GlobalVars.getInstance().updateHighScore();
+
+        // Background
+        this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.5).setOrigin(0);
+
+        // Title
+        this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 5, 'The enemies reached you....', {
+            fontFamily: 'CustomFont',
+            fontSize: '32px',
+            color: '#ffffff'
+        }).setOrigin(0.5);
+
+        //  Score
+        this.add.text(this.cameras.main.width / 2, this.cameras.main.height * 2 / 5, ('Score: ' + GlobalVars.getInstance().score), {
+            fontFamily: 'CustomFont',
+            fontSize: '32px',
+            color: '#ffffff'
+        }).setOrigin(0.5);
+
+         // High Score
+         this.add.text(this.cameras.main.width / 2, this.cameras.main.height * 3 / 5, ('High Score: ' + GlobalVars.getInstance().highScore), {
+            fontFamily: 'CustomFont',
+            fontSize: '32px',
+            color: '#ffffff'
+        }).setOrigin(0.5); 
+
+        // Instructions
+        this.add.text(this.cameras.main.width / 2, this.cameras.main.height * 4 / 5, 'Press <Q> to restart and beat your high score!', {
+            fontFamily: 'CustomFont',
+            fontSize: '28px',
+            color: '#ffffff'
+        }).setOrigin(0.5);
+
+        // Input listener to return to the game when any key is pressed
+        this.input.keyboard.once('keydown-Q', () => {
+            this.scene.start('GalleryShooterScene');
+            this.gameRestart();
+
+        });
+    }
+
+    gameRestart() {
+        let globalData = GlobalVars.getInstance();
+        globalData.score = 0;  // Reset score
+        this.scene.start('GalleryShooterScene');  // Start the main game scene
+    }
+}
+
 
 
 //Player dedw
