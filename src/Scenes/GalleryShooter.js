@@ -581,12 +581,12 @@ class GlobalVars {
     }
 
     saveHighScore() {
-        localStorage.setItem('highScore', this.highScore);
+        sessionStorage.setItem('highScore', this.highScore);
         console.log("High score saved: " + this.highScore);
     }
 
     readHighScore() {
-        let savedScore = localStorage.getItem('highScore');
+        let savedScore = sessionStorage.getItem('highScore');
         return savedScore ? parseInt(savedScore) : 0; // If there's a saved score, parse it to an integer, otherwise return 0
     }
 
